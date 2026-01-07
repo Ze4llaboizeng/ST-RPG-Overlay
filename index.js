@@ -1,4 +1,3 @@
-// ตัวแปรเก็บค่า Status
 let rpgStats = {
     hp: 100,
     maxHp: 100,
@@ -6,97 +5,155 @@ let rpgStats = {
     maxMp: 100
 };
 
-// ฟังก์ชันสร้าง UI เมื่อ Extension โหลด
+// --- Core UI Functions ---
+
 const initRPGUI = () => {
+    // ลบของเก่าถ้ามี (ป้องกันการโหลดซ้ำ)
+    $('#rpg-fab-btn, #rpg-main-panel').remove();
+
     const html = `
-    <div id="rpg-status-container">
-        <div class="rpg-bar-group">
-            <div class="rpg-bar-label"><span>HP</span> <span id="hp-text">100/100</span></div>
-            <div class="rpg-bar-bg">
-                <div id="hp-bar-fill" class="rpg-bar-fill"></div>
+    <div id="rpg-fab-btn" title="Open RPG Stats">
+        <i class="fa-solid fa-gamepad"></i>
+    </div>
+
+    <div id="rpg-main-panel">
+        <div class="rpg-header">
+            <span class="rpg-title">Character Status</span>
+            <i class="fa-solid fa-xmark rpg-close"></i>
+        </div>
+
+        <div class="rpg-stat-row">
+            <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                <strong>HP</strong> <span id="disp-hp-val">100/100</span>
+            </div>
+            <div class="rpg-bar-container">
+                <div id="bar-hp" class="rpg-bar-fill hp-fill" style="width: 100%;"></div>
+                <div class="rpg-bar-text">Health Points</div>
             </div>
         </div>
-        <div class="rpg-bar-group">
-            <div class="rpg-bar-label"><span>MP</span> <span id="mp-text">100/100</span></div>
-            <div class="rpg-bar-bg">
-                <div id="mp-bar-fill" class="rpg-bar-fill"></div>
+
+        <div class="rpg-stat-row">
+            <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                <strong>MP</strong> <span id="disp-mp-val">100/100</span>
+            </div>
+            <div class="rpg-bar-container">
+                <div id="bar-mp" class="rpg-bar-fill mp-fill" style="width: 100%;"></div>
+                <div class="rpg-bar-text">Mana Points</div>
             </div>
         </div>
-    </div>`;
-    
-    // Inject ลงใน Body ของ SillyTavern
+
+        <hr style="border-color:#444; margin: 15px 0;">
+
+        <div style="font-size:0.9rem; color:#888; margin-bottom:5px;">Manual Override / Settings</div>
+        <div class="rpg-settings-grid">
+            <div class="rpg-input-group">
+                <label>Current HP</label>
+                <input type="number" id="in-cur-hp" class="rpg-input" value="100">
+            </div>
+            <div class="rpg-input-group">
+                <label>Max HP</label>
+                <input type="number" id="in-max-hp" class="rpg-input" value="100">
+            </div>
+            <div class="rpg-input-group">
+                <label>Current MP</label>
+                <input type="number" id="in-cur-mp" class="rpg-input" value="100">
+            </div>
+            <div class="rpg-input-group">
+                <label>Max MP</label>
+                <input type="number" id="in-max-mp" class="rpg-input" value="100">
+            </div>
+        </div>
+    </div>
+    `;
+
     $('body').append(html);
-    console.log('[ST-RPG] UI Loaded');
+
+    // Event Listeners
+    $('#rpg-fab-btn').on('click', () => {
+        $('#rpg-main-panel').fadeToggle(200);
+        refreshInputs(); // ดึงค่าปัจจุบันมาใส่ Input ทุกครั้งที่เปิด
+    });
+
+    $('.rpg-close').on('click', () => {
+        $('#rpg-main-panel').fadeOut(200);
+    });
+
+    // ฟังการแก้ค่าใน Input (Manual Settings)
+    $('.rpg-input').on('change', function() {
+        rpgStats.hp = parseInt($('#in-cur-hp').val());
+        rpgStats.maxHp = parseInt($('#in-max-hp').val());
+        rpgStats.mp = parseInt($('#in-cur-mp').val());
+        rpgStats.maxMp = parseInt($('#in-max-mp').val());
+        updateRPGDisplay();
+    });
+    
+    console.log('[ST-RPG] Modern UI Loaded');
 };
 
-// ฟังก์ชันอัปเดต UI ตามค่าตัวแปร
+const refreshInputs = () => {
+    $('#in-cur-hp').val(rpgStats.hp);
+    $('#in-max-hp').val(rpgStats.maxHp);
+    $('#in-cur-mp').val(rpgStats.mp);
+    $('#in-max-mp').val(rpgStats.maxMp);
+};
+
 const updateRPGDisplay = () => {
-    // คำนวณ %
-    const hpPercent = Math.max(0, Math.min(100, (rpgStats.hp / rpgStats.maxHp) * 100));
-    const mpPercent = Math.max(0, Math.min(100, (rpgStats.mp / rpgStats.maxMp) * 100));
+    // Clamp values
+    rpgStats.hp = Math.min(rpgStats.maxHp, Math.max(0, rpgStats.hp));
+    rpgStats.mp = Math.min(rpgStats.maxMp, Math.max(0, rpgStats.mp));
 
-    // อัปเดต CSS Width
-    $('#hp-bar-fill').css('width', hpPercent + '%');
-    $('#mp-bar-fill').css('width', mpPercent + '%');
+    // Calc %
+    const hpPct = (rpgStats.hp / rpgStats.maxHp) * 100;
+    const mpPct = (rpgStats.mp / rpgStats.maxMp) * 100;
 
-    // อัปเดตตัวเลข
-    $('#hp-text').text(`${rpgStats.hp}/${rpgStats.maxHp}`);
-    $('#mp-text').text(`${rpgStats.mp}/${rpgStats.maxMp}`);
+    // Update Bars
+    $('#bar-hp').css('width', hpPct + '%');
+    $('#bar-mp').css('width', mpPct + '%');
+
+    // Update Text
+    $('#disp-hp-val').text(`${rpgStats.hp}/${rpgStats.maxHp}`);
+    $('#disp-mp-val').text(`${rpgStats.mp}/${rpgStats.maxMp}`);
+    
+    // Sync Inputs if panel is open
+    refreshInputs();
 };
 
-// ฟังก์ชัน Parsing ข้อความจาก AI
-// ค้นหา Pattern เช่น [HP-10] หรือ [MP+5]
 const parseRPGCommands = (text) => {
     let modified = false;
-
-    // Regex สำหรับจับค่า [HP+10], [HP-20], [MP+5]...
     const hpRegex = /\[HP([+-]\d+)\]/gi;
     const mpRegex = /\[MP([+-]\d+)\]/gi;
 
-    let hpMatch;
-    while ((hpMatch = hpRegex.exec(text)) !== null) {
-        rpgStats.hp += parseInt(hpMatch[1]);
+    let match;
+    while ((match = hpRegex.exec(text)) !== null) {
+        rpgStats.hp += parseInt(match[1]);
+        modified = true;
+    }
+    while ((match = mpRegex.exec(text)) !== null) {
+        rpgStats.mp += parseInt(match[1]);
         modified = true;
     }
 
-    let mpMatch;
-    while ((mpMatch = mpRegex.exec(text)) !== null) {
-        rpgStats.mp += parseInt(mpMatch[1]);
-        modified = true;
-    }
-
-    // Clamp ค่าไม่ให้เกิน Max หรือต่ำกว่า 0
     if (modified) {
-        rpgStats.hp = Math.min(rpgStats.maxHp, Math.max(0, rpgStats.hp));
-        rpgStats.mp = Math.min(rpgStats.maxMp, Math.max(0, rpgStats.mp));
         updateRPGDisplay();
-        toastr.info(`RPG Stats Updated: HP ${rpgStats.hp}, MP ${rpgStats.mp}`);
+        // แจ้งเตือนเล็กน้อย
+        if (typeof toastr !== 'undefined') {
+            toastr.success(`Status Updated! HP:${rpgStats.hp} MP:${rpgStats.mp}`);
+        }
     }
 };
 
-// Hook เข้ากับระบบรับข้อความของ SillyTavern
-// หมายเหตุ: แต่ละเวอร์ชั่นของ ST อาจใช้ Event ไม่เหมือนกัน อันนี้คือ Standard Hook
+// --- Initialization ---
+
 jQuery(document).ready(function () {
-    initRPGUI();
+    // รอให้ ST โหลดเสร็จสักนิด
+    setTimeout(initRPGUI, 1000);
 
-    // ฟัง Event เมื่อได้รับข้อความใหม่จาก AI
-    // (ใช้ event extension_message_received หรือ mutation observer ก็ได้)
-    // วิธีที่ง่ายที่สุดสำหรับ ST Extension API:
-    
-    const originalProcessResponse = window.processMessageToClient; 
-    
-    // Override เล็กน้อยเพื่อดักจับข้อความ (Monkey Patching)
-    // เตือน: ถ้า ST อัปเดตฟังก์ชันนี้ อาจต้องแก้โค้ด แต่เป็นวิธีที่ง่ายที่สุดในการเทส
-    /* หมายเหตุ: ในการใช้งานจริง ควรใช้ event listener:
-       eventSource.on(event_types.MESSAGE_RECEIVED, (id) => { ... })
-       แต่เพื่อความง่ายในการทดสอบเบื้องต้น เราจะใช้ MutationObserver จับ chat log
-    */
-
+    // Observer สำหรับจับข้อความใหม่
     const observer = new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
             if (mutation.addedNodes.length) {
                 $(mutation.addedNodes).each(function () {
-                    if ($(this).hasClass('mes')) { // ถ้าเป็นกล่องข้อความ
+                    if ($(this).hasClass('mes')) {
                         const text = $(this).find('.mes_text').text();
                         parseRPGCommands(text);
                     }
@@ -105,10 +162,8 @@ jQuery(document).ready(function () {
         });
     });
 
-    // เริ่มจับตาดู Chat Log
     const chatContainer = document.querySelector('#chat');
     if (chatContainer) {
         observer.observe(chatContainer, { childList: true, subtree: true });
-        console.log('[ST-RPG] Observer Attached');
     }
 });
