@@ -1,6 +1,7 @@
 {
-    "name": "Simple RPG Overlay",
-    "version": "1.0.0",
+    "name": "simple-rpg-overlay",
+    "display_name": "Simple RPG Overlay",
+    "version": "1.1.0",
     "author": "YourName",
     "description": "Adds an RPG status window with HP, MP, Gold, and Inventory.",
     "js": "index.js",
