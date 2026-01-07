@@ -1,0 +1,50 @@
+/* กรอบรวม Status Bar */
+#rpg-status-container {
+    position: fixed;
+    top: 10px;
+    right: 20px;
+    width: 250px;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 10px;
+    border-radius: 8px;
+    border: 2px solid #555;
+    z-index: 2000;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: white;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+
+.rpg-bar-label {
+    font-size: 12px;
+    margin-bottom: 2px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.rpg-bar-bg {
+    width: 100%;
+    height: 15px;
+    background-color: #333;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    overflow: hidden;
+    position: relative;
+}
+
+.rpg-bar-fill {
+    height: 100%;
+    width: 100%;
+    transition: width 0.5s ease-in-out;
+}
+
+#hp-bar-fill { background-color: #e74c3c; box-shadow: 0 0 10px #c0392b; }
+#mp-bar-fill { background-color: #3498db; box-shadow: 0 0 10px #2980b9; }
+
+.rpg-value-text {
+    position: absolute;
+    width: 100%;
+    text-align: center;
+    font-size: 10px;
+    line-height: 15px;
+    text-shadow: 1px 1px 1px black;
+}
